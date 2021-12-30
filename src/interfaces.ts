@@ -9,6 +9,7 @@ export interface Room {
   downloaded?: boolean;
   downloadedAt?: Date;
   position: number;
+  syncedAt: Date;
 }
 
 export const roomSchema = new Schema<Room>({
@@ -20,4 +21,5 @@ export const roomSchema = new Schema<Room>({
   downloaded: { type: Boolean, required: false },
   downloadedAt: { type: Date, required: false },
   position: { type: Number, required: true },
+  syncedAt: { type: Date, required: true },
 });

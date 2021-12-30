@@ -31,6 +31,7 @@ router.post('/room', async (ctx) => {
           createdAt: new Date(),
           movie: torrent.name,
           position: 0,
+          syncedAt: new Date(),
         };
         const doc = new RoomModel(room);
   
@@ -58,15 +59,20 @@ router.get('/room', async (ctx) => {
 });
 
 router.post('/position', async (ctx) => {
-  await RoomModel.updateOne({ id: ctx.request.body.id }, { position: Number(ctx.request.body.position) });
+  await RoomModel.updateOne({ id: ctx.request.body.id }, { 
+    position: Number(ctx.request.body.position),
+    syncedAt: new Date(),
+  });
   ctx.body = 'success';
 });
 
 router.get('/position', async (ctx) => {
   const room = await RoomModel.findOne({ id: ctx.request.query.id }).exec();
   if (room) {
+    const elapsedTime = new Date().getTime() - new Date(room.syncedAt).getTime();
     ctx.body = {
-      position: room.position,
+      position: room.position + elapsedTime / 1000,
+      syncedAt: room.syncedAt,
     };
   } else {
     ({ status: ctx.status, body: ctx.body } = errorResponse('room-00', 'Room not found'));
