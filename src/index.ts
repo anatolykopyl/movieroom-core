@@ -35,6 +35,7 @@ router.post('/room', async (ctx) => {
         const doc = new RoomModel(room);
   
         torrent.on('done', function () {
+          torrent.destroy();
           processDownloaded(torrent, room.id);
         });
   
@@ -77,14 +78,21 @@ router.get('/status', async (ctx) => {
   const room = await RoomModel.findOne({ id: ctx.request.query.id }).exec();
 
   if (room) {
-    const torrent = tCli.get(room.magnet);
-    if (torrent) {
+    if (room.downloaded) {
       ctx.body = {
-        progress: (torrent as WebTorrent.Torrent).progress,
+        progress: 1,
         downloaded: room.downloaded,
       };
     } else {
-      ({ status: ctx.status, body: ctx.body } = errorResponse('status-00', 'No torrent found'));
+      const torrent = tCli.get(room.magnet);
+      if (torrent) {
+        ctx.body = {
+          progress: (torrent as WebTorrent.Torrent).progress,
+          downloaded: room.downloaded,
+        };
+      } else {
+        ({ status: ctx.status, body: ctx.body } = errorResponse('status-00', 'No torrent found'));
+      }
     }
   } else {
     ({ status: ctx.status, body: ctx.body } = errorResponse('status-01', 'No room found'));
