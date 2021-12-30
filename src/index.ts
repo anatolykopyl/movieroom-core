@@ -6,13 +6,12 @@ import json from 'koa-json';
 import bodyParser from 'koa-bodyparser';
 import cors from '@koa/cors';
 
-import fs from 'fs';
-import mv from 'mv';
 import { model, connect } from 'mongoose';
 import short from 'short-uuid';
 import WebTorrent from 'webtorrent';
 
-import { errorResponse, findInDir } from './utils';
+import { errorResponse } from './utils';
+import processDownloaded from './processDownloaded';
 import { Room, roomSchema } from './interfaces';
 
 const RoomModel = model<Room>('Room', roomSchema);
@@ -23,36 +22,29 @@ const app = new Koa();
 const router = new Router({ prefix: '/api' });
 
 router.post('/room', async (ctx) => {
-  return new Promise(function (resolve) {
-    tCli.add(ctx.request.body.magnet, { path: process.env.TEMP_FILES }, async function (torrent) {
-      const room = {
-        id: (short()).new(),
-        magnet: ctx.request.body.magnet,
-        createdAt: new Date(),
-        movie: torrent.name,
-        position: 0,
-      };
-      const doc = new RoomModel(room);
-
-      torrent.on('done', function () {
-        const extensionsRegEx = /(\.mp4|\.mkv)$/;
-        findInDir(torrent.path, extensionsRegEx, (filename: string) => {
-          const extension = filename.split('.').pop();
-          mv(`./${filename}`, `${process.env.FILES}/${room.id}.${extension}`, () => {
-            doc.filename = room.id + '.' + extension;
-            doc.downloaded = true;
-            doc.downloadedAt = new Date();
-            doc.save();
-            fs.rmSync(__dirname + '/../' + torrent.path + '/' + torrent.name, { recursive: true });
-          });
+  if (ctx.request.body.magnet) {
+    return new Promise(function (resolve) {
+      tCli.add(ctx.request.body.magnet, { path: process.env.TEMP_FILES }, async function (torrent) {
+        const room = {
+          id: (short()).new(),
+          magnet: ctx.request.body.magnet,
+          createdAt: new Date(),
+          movie: torrent.name,
+          position: 0,
+        };
+        const doc = new RoomModel(room);
+  
+        torrent.on('done', function () {
+          processDownloaded(torrent, room.id);
         });
+  
+        await doc.save();
+        ctx.body = room;
+        resolve(null);
       });
-
-      await doc.save();
-      ctx.body = room;
-      resolve(null);
     });
-  });
+  }
+  ({ status: ctx.status, body: ctx.body } = errorResponse('room-01', 'Invalid magnet link'));
 });
 
 router.get('/room', async (ctx) => {
