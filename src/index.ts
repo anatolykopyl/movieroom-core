@@ -35,8 +35,11 @@ router.post('/room', async (ctx) => {
       const doc = new RoomModel(room);
 
       torrent.on('done', function () {
-        findInDir(torrent.path, /\.mp4$/, (filename: string) => {
-          mv(`./${filename}`, `${process.env.FILES}/${room.id}.mp4`, () => {
+        const extensionsRegEx = /(\.mp4|\.mkv)$/;
+        findInDir(torrent.path, extensionsRegEx, (filename: string) => {
+          const extension = filename.split('.').pop();
+          mv(`./${filename}`, `${process.env.FILES}/${room.id}.${extension}`, () => {
+            doc.filename = room.id + '.' + extension;
             doc.downloaded = true;
             doc.downloadedAt = new Date();
             doc.save();

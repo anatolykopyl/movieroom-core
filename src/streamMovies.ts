@@ -19,7 +19,7 @@ router.get('/', async (ctx) => {
     ({ status: ctx.status, body: ctx.body } = errorResponse('stream-01', 'Requires range header'));
   }
 
-  const videoPath = './files/' + ctx.request.query.id  + '.mp4';
+  const videoPath = './files/' + ctx.request.query.filename;
   const videoSize = fs.statSync(videoPath).size;
 
   // Parse Range
