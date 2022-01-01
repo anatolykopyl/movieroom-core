@@ -9,7 +9,13 @@ import { Room, roomSchema } from './interfaces';
 
 const RoomModel = model<Room>('Room', roomSchema);
 
-function deleteTemp(torrent: WebTorrent.Torrent) {
+async function completeDownload(torrent: WebTorrent.Torrent, id: short.SUUID, ext: string) {
+  await RoomModel.updateOne({ id: id }, { 
+    filename: id + '.' + ext,
+    downloaded: true,
+    downloadedAt: new Date(),
+  });
+
   fs.rmSync(__dirname + '/../' + torrent.path + '/' + torrent.name, { recursive: true });
 }
 
@@ -17,7 +23,7 @@ export default function (torrent: WebTorrent.Torrent, id: short.SUUID) {
   const extensionsRegEx = /(\.mp4|\.mkv|\.avi)$/;
   findInDir(torrent.path, extensionsRegEx, async (filename: string) => {
     const originalExtension = filename.split('.').pop();
-    const extension = '.mp4';
+    const extension = 'mp4';
     const outputLocation = `${process.env.FILES}/${id}.${extension}`;
 
     if (originalExtension !== 'mp4') {
@@ -29,17 +35,11 @@ export default function (torrent: WebTorrent.Torrent, id: short.SUUID) {
           });
         })
         .on('complete', () => {
-          deleteTemp(torrent);
+          completeDownload(torrent, id, extension);
         });
     } else {
       mv(filename, outputLocation, async () => {
-        await RoomModel.updateOne({ id: id }, { 
-          filename: id + '.' + extension,
-          downloaded: true,
-          downloadedAt: new Date(),
-        });
-        
-        deleteTemp(torrent);
+        completeDownload(torrent, id, extension);
       });
     }
   });
