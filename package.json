@@ -25,6 +25,7 @@
     "webtorrent": "^1.5.8"
   },
   "devDependencies": {
+    "@types/handbrake-js": "^5.0.1",
     "@types/koa": "^2.13.4",
     "@types/koa__cors": "^3.1.1",
     "@types/koa-bodyparser": "^4.3.5",

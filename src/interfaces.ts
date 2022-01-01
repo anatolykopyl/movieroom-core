@@ -6,6 +6,8 @@ export interface Room {
   createdAt: Date;
   movie?: string;
   filename?: string;
+  downloadedProg?: number;
+  reencodedProg?: number;
   downloaded?: boolean;
   downloadedAt?: Date;
   position: number;
@@ -19,6 +21,8 @@ export const roomSchema = new Schema<Room>({
   movie: { type: String, required: false },
   filename: { type: String, required: false },
   downloaded: { type: Boolean, required: false },
+  downloadedProg: { type: Number, required: false },
+  reencodedProg: { type: Number, required: false },
   downloadedAt: { type: Date, required: false },
   position: { type: Number, required: true },
   syncedAt: { type: Date, required: true },
