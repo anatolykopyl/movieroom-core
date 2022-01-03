@@ -14,7 +14,9 @@ const RoomModel = model<Room>('Room', roomSchema);
 const tCli = new WebTorrent();
 
 const router = new Router({ prefix: '/api' });
-const koaBody = KoaBody({ multipart: true });
+const koaBody = KoaBody({ multipart: true, formidable: {
+  maxFileSize: 2.5 * 10 ** 9,
+} });
 
 router.post('/roomMagnet', async (ctx) => {
   if (ctx.request.body.magnet) {

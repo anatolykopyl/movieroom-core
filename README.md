@@ -1,4 +1,4 @@
-# W2G API
+# Movieroom API
 
-API for [watch2gether](https://github.com/anatolykopyl/watch2gether-front).
+API for [movieroom](https://github.com/anatolykopyl/movieroom-front).
 Also contains movie streaming server.
