@@ -2,7 +2,7 @@ import { Schema } from 'mongoose';
 
 export interface Room {
   id: string;
-  magnet: string;
+  magnet?: string;
   createdAt: Date;
   movie?: string;
   filename?: string;
@@ -16,7 +16,7 @@ export interface Room {
 
 export const roomSchema = new Schema<Room>({
   id: { type: String, required: true },
-  magnet: { type: String, required: true },
+  magnet: { type: String, required: false },
   createdAt: { type: Date, required: true },
   movie: { type: String, required: false },
   filename: { type: String, required: false },

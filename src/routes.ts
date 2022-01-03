@@ -1,18 +1,22 @@
 import Router from 'koa-router';
+import KoaBody from 'koa-body';
 import short from 'short-uuid';
 import WebTorrent from 'webtorrent';
 import { model } from 'mongoose';
+import fs from 'fs';
 
 import { errorResponse } from './utils';
 import processDownloaded from './processDownloaded';
 import { Room, roomSchema } from './interfaces';
+import type formidable from 'formidable';
 
 const RoomModel = model<Room>('Room', roomSchema);
 const tCli = new WebTorrent();
 
 const router = new Router({ prefix: '/api' });
+const koaBody = KoaBody({ multipart: true });
 
-router.post('/room', async (ctx) => {
+router.post('/roomMagnet', async (ctx) => {
   if (ctx.request.body.magnet) {
     return new Promise(function (resolve) {
       tCli.add(ctx.request.body.magnet, { path: process.env.TEMP_FILES }, async function (torrent) {
@@ -47,8 +51,32 @@ router.post('/room', async (ctx) => {
         resolve(null);
       });
     });
+  } else {
+    ({ status: ctx.status, body: ctx.body } = errorResponse('room-01', 'Invalid magnet link'));
   }
-  ({ status: ctx.status, body: ctx.body } = errorResponse('room-01', 'Invalid magnet link'));
+});
+
+router.post('/roomFile', koaBody, async (ctx) => {
+  if (ctx.request.files.file) {
+    const file = ctx.request.files.file as formidable.File;
+    const id = (short()).new();
+    const room = {
+      id,
+      createdAt: new Date(),
+      movie: file.name,
+      position: 0,
+      syncedAt: new Date(),
+      downloaded: true,
+      filename: `${id}.mp4`,
+    };
+    const doc = new RoomModel(room);
+    await doc.save();
+    await fs.cpSync(file.path, `files/${id}.mp4`);
+
+    ctx.body = room;
+  } else {
+    ({ status: ctx.status, body: ctx.body } = errorResponse('room-02', 'Invalid file'));
+  }
 });
 
 router.get('/room', async (ctx) => {
